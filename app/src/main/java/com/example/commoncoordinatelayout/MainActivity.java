@@ -1,13 +1,20 @@
 package com.example.commoncoordinatelayout;
 
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.recyclerview.widget.StaggeredGridLayoutManager;
 
+import android.content.Context;
 import android.os.Bundle;
+import android.util.Log;
+import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
-import android.widget.LinearLayout;
+import android.view.WindowManager;
+import android.widget.TextView;
+import android.widget.Toast;
+
+import static android.widget.LinearLayout.HORIZONTAL;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -17,37 +24,53 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         final CommonCoordinateLayout coordinateLayout = findViewById(R.id.coordinateLayout);
-        final LinearLayout coordinateHelpLayout = findViewById(R.id.coordinateHelpLayout);
-        final LinearLayout buttonsLayout = findViewById(R.id.buttonsLayout);
+        final TextView more = findViewById(R.id.more);
         final RecyclerView recyclerView = findViewById(R.id.recyclerView);
-        recyclerView.setLayoutManager(new LinearLayoutManager(this));
+        recyclerView.setLayoutManager(new StaggeredGridLayoutManager(2,HORIZONTAL));
         Adapter adapter = new Adapter(this);
         recyclerView.setAdapter(adapter);
 
-        coordinateLayout.setHelpLayout(coordinateHelpLayout);
+        coordinateLayout.setMoreLayout(more);
         coordinateLayout.setRecyclerView(recyclerView);
         coordinateLayout.setStatusBarHeight(0);
 
-        buttonsLayout.getViewTreeObserver().addOnGlobalLayoutListener(
+        more.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Toast.makeText(MainActivity.this, "更多", Toast.LENGTH_SHORT).show();
+                Log.e("TFF", "点击");
+
+            }
+        });
+
+        more.getViewTreeObserver().addOnGlobalLayoutListener(
                 new ViewTreeObserver.OnGlobalLayoutListener() {
                     @Override
                     public void onGlobalLayout() {
-                        int coordinateLayoutHeight = coordinateLayout.getMeasuredHeight();
-                        int recyclerViewHeight = coordinateLayoutHeight - buttonsLayout.getMeasuredHeight();
+                        int recyclerViewWidth = coordinateLayout.getMeasuredWidth() - more.getMeasuredHeight();
 
-                        //设置上滑最大高度
-                        coordinateLayout.setMaxScroll(coordinateHelpLayout.getMeasuredHeight() - buttonsLayout.getMeasuredHeight());
+                        //todo 设置左滑最大距离,需要调整下
+                        coordinateLayout.setMaxScroll(coordinateLayout.getMeasuredWidth() - more.getMeasuredWidth());
                         //设置上滑最小高度
-                        coordinateLayout.setMinScroll(0);
+                        coordinateLayout.setMinScroll(60);
                         coordinateLayout.scrollTo(0, 0);
                         //设置RecyclerView高度
                         ViewGroup.LayoutParams layoutParams = recyclerView.getLayoutParams();
-                        layoutParams.height = recyclerViewHeight;
-                        recyclerView.setLayoutParams(layoutParams);
+                        layoutParams.width = getDisplay();
+//                        recyclerView.setLayoutParams(layoutParams);
 
-                        buttonsLayout.getViewTreeObserver().removeOnGlobalLayoutListener(this);
+                        more.getViewTreeObserver().removeOnGlobalLayoutListener(this);
                     }
                 });
 
+    }
+
+    private  int getDisplay() {
+        WindowManager wm = (WindowManager)getSystemService(Context.WINDOW_SERVICE);
+        if (wm != null) {
+            return wm.getDefaultDisplay().getWidth();
+        } else {
+            return -1;
+        }
     }
 }

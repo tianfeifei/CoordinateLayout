@@ -9,59 +9,25 @@
     <com.example.commoncoordinatelayout.CommonCoordinateLayout
         android:id="@+id/coordinateLayout"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:orientation="vertical">
-
-        <LinearLayout
-            android:id="@+id/coordinateHelpLayout"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical">
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:background="#8910"
-                android:gravity="center_horizontal"
-                android:padding="60dp"
-                android:text="TextView"
-                android:textColor="#fff"
-                android:textSize="20sp" />
-
-            <LinearLayout
-                android:id="@+id/buttonsLayout"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal">
-
-                <Button
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="button" />
-
-                <Button
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:layout_marginLeft="20dp"
-                    android:layout_marginRight="20dp"
-                    android:text="button" />
-
-                <Button
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="button" />
-
-            </LinearLayout>
-
-        </LinearLayout>
+        android:layout_height="200dp"
+        android:orientation="horizontal">
 
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/recyclerView"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content" />
+            android:layout_height="match_parent" />
+
+
+        <TextView
+            android:id="@+id/more"
+            android:layout_marginLeft="20dp"
+            android:layout_width="100dp"
+            android:layout_height="wrap_content"
+            android:background="#8910"
+            android:layout_gravity="center_vertical|right"
+            android:text="更\n多"
+            android:textColor="#fff"
+            android:textSize="20sp" />
 
     </com.example.commoncoordinatelayout.CommonCoordinateLayout>
 
