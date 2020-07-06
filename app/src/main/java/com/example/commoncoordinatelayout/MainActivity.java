@@ -11,6 +11,8 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
 import android.view.WindowManager;
+import android.widget.LinearLayout;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -25,14 +27,15 @@ public class MainActivity extends AppCompatActivity {
 
         final CommonCoordinateLayout coordinateLayout = findViewById(R.id.coordinateLayout);
         final TextView more = findViewById(R.id.more);
+        final RelativeLayout moreLayout = findViewById(R.id.ll_more);
         final RecyclerView recyclerView = findViewById(R.id.recyclerView);
         recyclerView.setLayoutManager(new StaggeredGridLayoutManager(2,HORIZONTAL));
         Adapter adapter = new Adapter(this);
         recyclerView.setAdapter(adapter);
 
-        coordinateLayout.setMoreLayout(more);
+        coordinateLayout.setMoreLayout(moreLayout);
+        coordinateLayout.setMore(more);
         coordinateLayout.setRecyclerView(recyclerView);
-        coordinateLayout.setStatusBarHeight(0);
 
         more.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -50,9 +53,7 @@ public class MainActivity extends AppCompatActivity {
                         int recyclerViewWidth = coordinateLayout.getMeasuredWidth() - more.getMeasuredHeight();
 
                         //todo 设置左滑最大距离,需要调整下
-                        coordinateLayout.setMaxScroll(coordinateLayout.getMeasuredWidth() - more.getMeasuredWidth());
                         //设置上滑最小高度
-                        coordinateLayout.setMinScroll(60);
                         coordinateLayout.scrollTo(0, 0);
                         //设置RecyclerView高度
                         ViewGroup.LayoutParams layoutParams = recyclerView.getLayoutParams();
