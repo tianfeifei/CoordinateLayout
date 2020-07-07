@@ -30,12 +30,9 @@
                 android:layout_height="wrap_content"
                 android:background="#8910"
                 android:layout_alignParentLeft="true"
-
                 android:layout_centerVertical="true"
-
                 android:text="更多"
                 android:textSize="12sp" />
-
             <ImageView
                 android:id="@+id/icon"
                 android:layout_width="50dp"
@@ -43,10 +40,7 @@
                 android:layout_toRightOf="@+id/more"
                 android:src="@mipmap/ic_launcher"
                 android:layout_centerVertical="true">
-
             </ImageView>
-
-
 
         </RelativeLayout>
 
