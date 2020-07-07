@@ -1,5 +1,6 @@
 package com.example.commoncoordinatelayout;
 
+import android.content.Context;
 import android.graphics.Paint;
 import android.view.View;
 import android.widget.TextView;
@@ -10,9 +11,10 @@ import android.widget.TextView;
 public class Util {
 
     //方法入口
-    public static float getCharacterWidth(TextView tv){
+    public static float getCharacterWidth(TextView tv,int size){
         if(null == tv) return 0f;
-        return getCharacterWidth("更多",tv.getTextSize()) * tv.getScaleX();
+        float v = getCharacterWidth(tv.getText().toString(), tv.getTextSize()) * tv.getScaleX();
+        return v*size;
     }
 
     //获取每个字符的宽度bai主方法：
@@ -27,7 +29,19 @@ public class Util {
         return width;
     }
 
+    /**
+     * 根据手机的分辨率从 dp 的单位 转成为 px(像素)
+     */
+    public static int dip2px(Context context, float dpValue) {
+        final float scale = context.getResources().getDisplayMetrics().density;
+        return (int) (dpValue * scale + 0.5f);
+    }
 
-    public static void startRotateAnimation(View view) {
+    /**
+     * 根据手机的分辨率从 px(像素) 的单位 转成为 dp
+     */
+    public static int px2dip(Context context, float pxValue) {
+        final float scale = context.getResources().getDisplayMetrics().density;
+        return (int) (pxValue / scale + 0.5f);
     }
 }
