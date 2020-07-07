@@ -11,7 +11,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
 import android.view.WindowManager;
-import android.widget.LinearLayout;
+import android.widget.ImageView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -27,7 +27,7 @@ public class MainActivity extends AppCompatActivity {
 
         final CommonCoordinateLayout coordinateLayout = findViewById(R.id.coordinateLayout);
         final TextView more = findViewById(R.id.more);
-        final LinearLayout ll_icon = findViewById(R.id.ll_icon);
+        final ImageView icon = findViewById(R.id.icon);
         final RelativeLayout moreLayout = findViewById(R.id.ll_more);
         final RecyclerView recyclerView = findViewById(R.id.recyclerView);
         recyclerView.setLayoutManager(new StaggeredGridLayoutManager(2,HORIZONTAL));
@@ -36,7 +36,7 @@ public class MainActivity extends AppCompatActivity {
 
         coordinateLayout.setMoreLayout(moreLayout);
         coordinateLayout.setMore(more);
-        coordinateLayout.setLl_icon(ll_icon);
+        coordinateLayout.setIcon(icon);
         coordinateLayout.setRecyclerView(recyclerView);
 
         more.setOnClickListener(new View.OnClickListener() {

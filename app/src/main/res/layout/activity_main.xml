@@ -37,21 +37,22 @@
                 android:text="更多"
                 android:textSize="12sp" />
 
-            <LinearLayout
-                android:id="@+id/ll_icon"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
+            <ImageView
+                android:id="@+id/icon"
+                android:layout_width="50dp"
+                android:layout_height="50dp"
                 android:layout_toRightOf="@+id/more"
+                android:src="@mipmap/ic_launcher"
                 android:layout_centerVertical="true">
 
-                <ImageView
-                    android:id="@+id/icon"
-                    android:layout_width="50dp"
-                    android:layout_height="50dp"
+<!--                <-->
+<!--                    android:id="@+id/icon"-->
+<!--                    android:layout_width="50dp"-->
+<!--                    android:layout_height="50dp"-->
 
-                    android:layout_centerVertical="true"
-                    android:src="@mipmap/ic_launcher"/>
-            </LinearLayout>
+<!--                    android:layout_centerVertical="true"-->
+<!--                    android:src="@mipmap/ic_launcher"/>-->
+            </ImageView>
 
 
 
