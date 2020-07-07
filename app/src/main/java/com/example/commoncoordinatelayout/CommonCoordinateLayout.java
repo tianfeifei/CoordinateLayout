@@ -291,13 +291,14 @@ public class CommonCoordinateLayout extends LinearLayout {
 
         } else {//转圈完成
             more.setText("松开查看");
+
             //todo 修改moreLayout大小;往左平移2个字符宽度
-            if (!isChanged) {
+            if (true) {
 //                                ViewGroup.LayoutParams layoutParams = moreLayout.getLayoutParams();
 //                                layoutParams.width += 100;
 //                                moreLayout.setLayoutParams(layoutParams);
 //                                moreLayout.invalidate();
-//                                moreLayout.setTranslationX(-100-(scrollX - 450));
+                                moreLayout.setTranslationX((scrollX - 450));
 //                                ll_icon.setTranslationX(100-(scrollX - 450));
                 isChanged = true;
             }
