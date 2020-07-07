@@ -1,6 +1,7 @@
 package com.example.commoncoordinatelayout;
 
 import android.content.Context;
+import android.os.Handler;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.MotionEvent;
@@ -11,6 +12,7 @@ import android.widget.LinearLayout;
 import android.widget.Scroller;
 import android.widget.TextView;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.recyclerview.widget.StaggeredGridLayoutManager;
@@ -35,6 +37,7 @@ public class CommonCoordinateLayout extends LinearLayout {
     private int SCROLL_DELAY_DISTANCE;
     private Scroller mScroller;
     private VelocityTracker velocityTracker;
+    private int mVelocityX;
 
     public CommonCoordinateLayout(Context context) {
         super(context);
@@ -159,31 +162,7 @@ public class CommonCoordinateLayout extends LinearLayout {
                     if (scrollX > 0) {
                         dealBySelf(dX, Math.abs(currentX - startX));
                         isRecyclerViewMoving = false;
-                        if (scrollX > 350) { //固定不动
-                            moreLayout.setTranslationX(scrollX - 350);
-                            //todo 箭头开始转圈 (滚动距离从350转到450为止，在此之间箭头转了180度)
-                        }
-
-                        if (getScrollX() <= 450) {
-                            isFling = true;
-                            Log.e("TFF", "悬停，显示更多");
-                            more.setText("更多");
-
-
-                        } else {//转圈完成
-                            more.setText("松手加载");
-                            //todo 修改moreLayout大小;往左平移2个字符宽度
-                            if (!isChanged) {
-//                                ViewGroup.LayoutParams layoutParams = moreLayout.getLayoutParams();
-//                                layoutParams.width += 100;
-//                                moreLayout.setLayoutParams(layoutParams);
-//                                moreLayout.invalidate();
-//                                moreLayout.setTranslationX(-100-(scrollX - 450));
-//                                ll_icon.setTranslationX(100-(scrollX - 450));
-                                isChanged = true;
-                            }
-
-                        }
+                        dealMoreLayout(scrollX);
                     } else {
                         Log.e("TFF", "recyclerView处理");
 
@@ -202,28 +181,13 @@ public class CommonCoordinateLayout extends LinearLayout {
                         Log.e("TFF", "滑到尾部了，自己处理");
                         dealBySelf(dX, Math.abs(currentX - startX));
 
-                        //todo 更多按钮不靠边
-                        int scrollX = getScrollX();
 
+                        int scrollX = getScrollX();
                         Log.e("TFF", "移动距离=" + Math.abs(currentX - startX));
                         Log.e("TFF", "移动距离=getScrollX()=" + getScrollX());
-
-                        if (scrollX > 350) {
-                            moreLayout.setTranslationX(scrollX - 350);
-                        }
-
-                        if (getScrollX() <= 450) {
-                            isFling = true;
-                            Log.e("TFF", "悬停，显示更多");
-                            more.setText("更多");
-
-
-                        } else {
-                            more.setText("松手加载");
-                        }
+                        dealMoreLayout(scrollX);
 
                         isRecyclerViewMoving = false;
-
                     } else {
                         Log.e("TFF", "recyclerView处理");
                         recyclerView.dispatchTouchEvent(eventClone);
@@ -268,7 +232,7 @@ public class CommonCoordinateLayout extends LinearLayout {
                  * 惯性处理 (不是在操作Banner的时候才进行惯性滑动处理)
                  * */
                 if (velocityTracker != null) {
-                    velocityTracker.computeCurrentVelocity(1000);
+                    velocityTracker.computeCurrentVelocity(2000);
                     float xVelocity = velocityTracker.getXVelocity();
 
                     velocityTracker.recycle();
@@ -281,8 +245,7 @@ public class CommonCoordinateLayout extends LinearLayout {
                      * */
                     Log.e("TFF", "移动距离getScrollX()=" + getScrollX());
 
-                    if (getScrollX() <= 250) {//左滑，回弹到80，显示更多
-                        isFling = true;
+                    if (getScrollX() < 0) {//左滑，回弹到80，显示更多
                         // mScroller.startScroll(getScrollX(), getScrollY(), -getScrollX() + 50, getScrollY());
                         Log.e("TFF", "悬停，显示更多");
 
@@ -291,11 +254,22 @@ public class CommonCoordinateLayout extends LinearLayout {
                         // mScroller.startScroll(getScrollX(), getScrollY(), -getScrollX(), getScrollY());
 
 //                        mScroller.fling(getScrollX(), getScrollY(), (int) -xVelocity, 0, minScrollX-1000, maxScrollX+1000 , 0, 0);//此处不能用抛射
-                        isFling = true;
-                        Log.e("TFF", "回滚，松手加载");
+                        Log.e("TFF", "回滚，松开查看");
 
                     }
-                    mScroller.startScroll(getScrollX(), getScrollY(), -getScrollX(), getScrollY());
+
+//                    if (Math.abs(xVelocity) > 0&&isSlideToRight(recyclerView)) {
+//                        mScroller.fling(getScrollX(), 0, (int) -xVelocity, 0, 0, getMeasuredWidth() / 2, 0, 0);
+//                        isFling = true;
+//                    } else {
+//                        mScroller.startScroll(getScrollX(), 0, -getScrollX(), 0);
+//
+//                    }
+
+                    if (!isRecyclerViewMoving) {
+                        mScroller.startScroll(getScrollX(), 0, -getScrollX(), 0);
+                    }
+
 
                     //重置更多位置
                     moreLayout.setTranslationX(0);
@@ -310,6 +284,74 @@ public class CommonCoordinateLayout extends LinearLayout {
         eventMoreClone.recycle();
 
         return true;
+    }
+
+    @Override
+    public void computeScroll() {
+        super.computeScroll();
+
+        if (mScroller.computeScrollOffset()) {
+
+            int nextX = mScroller.getCurrX();
+            Log.e("TFF", "滚动中nextX="+nextX);
+
+            scrollTo(nextX, 0);
+//            if (nextX > maxScrollX + OVER_SCROLL_LENGTH) {
+//                //向左 Over Scroll
+//                if (isFling) {
+//                    mScroller.startScroll(getScrollX(), getScrollY(), -getScrollX(), getScrollY());
+//                    isFling = false;
+//                }
+             if (nextX >100) { //抛射后，由于惯性，当滚动大于200后，自动弹回初始位置
+                //向右 Over Scroll
+                if (isFling) {
+                    mScroller.startScroll(getScrollX(), 0, -getScrollX(),0);
+
+                    isFling = false;
+                }
+            }
+
+
+            postInvalidate();
+        } else {
+            Log.e("TFF", "滚动完成");
+
+//            if (isFling) {
+//                mScroller.startScroll(getScrollX(), 0, -getScrollX(),0);
+//                postInvalidate();
+//
+//                isFling = false;
+//            }
+        }
+    }
+
+
+    private void dealMoreLayout(int scrollX) {
+        if (scrollX > 350) { //固定不动
+            moreLayout.setTranslationX(scrollX - 350);
+            //todo 箭头开始转圈 (滚动距离从350转到450为止，在此之间箭头转了180度)
+        }
+
+        if (getScrollX() <= 450) {
+            isFling = true;
+            Log.e("TFF", "悬停，显示更多");
+            more.setText("更多");
+
+
+        } else {//转圈完成
+            more.setText("松开查看");
+            //todo 修改moreLayout大小;往左平移2个字符宽度
+            if (!isChanged) {
+//                                ViewGroup.LayoutParams layoutParams = moreLayout.getLayoutParams();
+//                                layoutParams.width += 100;
+//                                moreLayout.setLayoutParams(layoutParams);
+//                                moreLayout.invalidate();
+//                                moreLayout.setTranslationX(-100-(scrollX - 450));
+//                                ll_icon.setTranslationX(100-(scrollX - 450));
+                isChanged = true;
+            }
+
+        }
     }
 
     private boolean inMoreLayout(MotionEvent event) {
@@ -372,34 +414,6 @@ public class CommonCoordinateLayout extends LinearLayout {
 
     }
 
-    @Override
-    public void computeScroll() {
-        super.computeScroll();
-
-        if (mScroller.computeScrollOffset()) {
-            int nextX = mScroller.getCurrX();
-            scrollTo(nextX, 0);
-//            if (nextX > maxScrollX + OVER_SCROLL_LENGTH) {
-//                //向左 Over Scroll
-//                if (isFling) {
-//                    mScroller.startScroll(getScrollX(), getScrollY(), -getScrollX(), getScrollY());
-//                    isFling = false;
-//                }
-//            } else if (nextX < minScrollX - OVER_SCROLL_LENGTH) {
-//                //向右 Over Scroll
-//                if (isFling) {
-//                    mScroller.startScroll(getScrollX(), getScrollY(), -getScrollX(), getScrollY());
-//                    isFling = false;
-//                }
-//            }
-
-//            if (isFling) {
-//                mScroller.startScroll(getScrollX(), getScrollY(), -getScrollX(), getScrollY());
-//                isFling = false;
-//            }
-            postInvalidate();
-        }
-    }
 
     @Override
     protected void onScrollChanged(int l, int t, int oldl, int oldt) {
@@ -416,8 +430,50 @@ public class CommonCoordinateLayout extends LinearLayout {
     }
 
 
-    public void setRecyclerView(RecyclerView recyclerView) {
+    public void setRecyclerView(final RecyclerView recyclerView) {
         this.recyclerView = recyclerView;
+        recyclerView.setOnFlingListener(new RecyclerView.OnFlingListener() {
+            @Override
+            public boolean onFling(int velocityX, int velocityY) {
+                isFling = true;
+                mVelocityX = velocityX;
+                Log.e("TFF", "velocityX=" + velocityX);
+
+                if (velocityX > 0&&isSlideToRight(recyclerView)) {
+                    Log.e("TFF", "velocityX到了尾部" );
+
+                    if (recyclerView.getScrollState()== RecyclerView.SCROLL_STATE_SETTLING) {
+
+                    }
+                }
+//                mScroller.fling(getScrollX(), 0, (int) -xVelocity, 0, 0, getMeasuredWidth() / 2, 0, 0);
+
+                return false;
+            }
+        });
+
+
+        recyclerView.setOnScrollListener(new RecyclerView.OnScrollListener() {
+            @Override
+            public void onScrollStateChanged(@NonNull RecyclerView recyclerView, int newState) {
+                super.onScrollStateChanged(recyclerView, newState);
+            }
+
+            @Override
+            public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
+                super.onScrolled(recyclerView, dx, dy);
+                Log.e("TFF", "onScrolled#dx=" + dx);
+
+                if (mVelocityX > 0 && isSlideToRight(recyclerView)) {
+                    Log.e("TFF", "onScrolled#到底了" );
+//                    mScroller.fling(getScrollX(), 0, (int) -xVelocity, 0, 0, getMeasuredWidth() / 2, 0, 0);
+
+                mScroller.fling(getScrollX(), 0, (int) 42282, 0, 0, getMeasuredWidth() /8, 0, 0);
+                CommonCoordinateLayout.this.invalidate();
+
+                }
+            }
+        });
     }
 
     public void setMoreLayout(View moreLayout) {
@@ -427,6 +483,7 @@ public class CommonCoordinateLayout extends LinearLayout {
     public void setMore(TextView textView) {
         this.more = textView;
     }
+
     public void setLl_icon(LinearLayout ll_icon) {
         this.ll_icon = ll_icon;
     }
