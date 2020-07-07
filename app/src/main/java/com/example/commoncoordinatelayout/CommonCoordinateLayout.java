@@ -37,17 +37,16 @@ public class CommonCoordinateLayout extends LinearLayout {
 
 
     public int get阈值1() {
-
+        //更多按钮宽度+箭头宽度
         float measuredWidth = Util.getCharacterWidth(more);
         return (int) (measuredWidth + icon.getMeasuredWidth() + 20);
     }
 
     public int get阈值2() {
+        //此阈值为显示"松手查看"的临界值，阈值1到阈值2为箭头旋转的过程，
         return get阈值1() + 240;
     }
 
-    private final int 阈值1 = 180;//更多按钮宽度+箭头宽度
-    private final int 阈值2 = 阈值1 + 120;//此阈值为显示"松手查看"的临界值，阈值1到阈值2为箭头旋转的过程，
 
     public CommonCoordinateLayout(Context context) {
         super(context);
@@ -355,7 +354,15 @@ public class CommonCoordinateLayout extends LinearLayout {
             moreLayout.setTranslationX(translationX);
 
             //todo 箭头开始转圈 (滚动距离从阈值1转到阈值2为止，在此之间箭头转了180度)
-            icon.setRotation(180*(scrollX-阈值1)/ (阈值2-阈值1));
+            int rotation = 180 * (scrollX - get阈值1()) / (get阈值2() - get阈值1());
+
+            if (rotation >= 180) {
+                rotation = 180;
+            } else if (rotation < -180) {
+                rotation=-180;
+            }
+            Log.e("TFF", "rotation="+rotation);
+            icon.setRotation(rotation);
 
 
         }
