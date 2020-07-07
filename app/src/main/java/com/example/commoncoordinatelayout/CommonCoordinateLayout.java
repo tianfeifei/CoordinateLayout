@@ -28,6 +28,7 @@ public class CommonCoordinateLayout extends LinearLayout {
     private RecyclerView recyclerView;
     private View moreLayout;
     private TextView more;
+    private LinearLayout ll_icon;
     private final int OVER_SCROLL_LENGTH = 0;
     private boolean isSelfConsumer;
     private int ADSORPTION_DISTANCE;
@@ -115,6 +116,10 @@ public class CommonCoordinateLayout extends LinearLayout {
 
         switch (event.getAction()) {
             case MotionEvent.ACTION_DOWN:
+
+                isChanged = false;
+
+
                 recyclerView.dispatchTouchEvent(eventClone);
                 if (inMoreLayout(event))
                     moreLayout.dispatchTouchEvent(eventMoreClone);
@@ -169,11 +174,12 @@ public class CommonCoordinateLayout extends LinearLayout {
                             more.setText("松手加载");
                             //todo 修改moreLayout大小;往左平移2个字符宽度
                             if (!isChanged) {
-                                ViewGroup.LayoutParams layoutParams = moreLayout.getLayoutParams();
-                                layoutParams.width += 100;
-                                moreLayout.setLayoutParams(layoutParams);
-                                moreLayout.invalidate();
-//                                moreLayout.setTranslationX(100);
+//                                ViewGroup.LayoutParams layoutParams = moreLayout.getLayoutParams();
+//                                layoutParams.width += 100;
+//                                moreLayout.setLayoutParams(layoutParams);
+//                                moreLayout.invalidate();
+//                                moreLayout.setTranslationX(-100-(scrollX - 450));
+//                                ll_icon.setTranslationX(100-(scrollX - 450));
                                 isChanged = true;
                             }
 
@@ -420,5 +426,8 @@ public class CommonCoordinateLayout extends LinearLayout {
 
     public void setMore(TextView textView) {
         this.more = textView;
+    }
+    public void setLl_icon(LinearLayout ll_icon) {
+        this.ll_icon = ll_icon;
     }
 }
