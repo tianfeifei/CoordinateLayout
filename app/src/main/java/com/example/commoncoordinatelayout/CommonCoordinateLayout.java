@@ -6,6 +6,7 @@ import android.util.Log;
 import android.view.MotionEvent;
 import android.view.VelocityTracker;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.LinearLayout;
 import android.widget.Scroller;
 import android.widget.TextView;
@@ -20,6 +21,7 @@ import androidx.recyclerview.widget.StaggeredGridLayoutManager;
 
 public class CommonCoordinateLayout extends LinearLayout {
     private boolean isFling;
+    private boolean isChanged;
     private boolean isRecyclerViewMoving;
     private float startX;
     private float lastX;
@@ -152,19 +154,29 @@ public class CommonCoordinateLayout extends LinearLayout {
                     if (scrollX > 0) {
                         dealBySelf(dX, Math.abs(currentX - startX));
                         isRecyclerViewMoving = false;
-                        if (scrollX > 300) { //固定不动
-                            moreLayout.setTranslationX(scrollX - 300);
-                            //todo 箭头开始转圈
+                        if (scrollX > 350) { //固定不动
+                            moreLayout.setTranslationX(scrollX - 350);
+                            //todo 箭头开始转圈 (滚动距离从350转到450为止，在此之间箭头转了180度)
                         }
 
-                        if (getScrollX() <= 350) {
+                        if (getScrollX() <= 450) {
                             isFling = true;
                             Log.e("TFF", "悬停，显示更多");
                             more.setText("更多");
 
 
-                        } else {
+                        } else {//转圈完成
                             more.setText("松手加载");
+                            //todo 修改moreLayout大小;往左平移2个字符宽度
+                            if (!isChanged) {
+                                ViewGroup.LayoutParams layoutParams = moreLayout.getLayoutParams();
+                                layoutParams.width += 100;
+                                moreLayout.setLayoutParams(layoutParams);
+                                moreLayout.invalidate();
+//                                moreLayout.setTranslationX(100);
+                                isChanged = true;
+                            }
+
                         }
                     } else {
                         Log.e("TFF", "recyclerView处理");
@@ -190,11 +202,11 @@ public class CommonCoordinateLayout extends LinearLayout {
                         Log.e("TFF", "移动距离=" + Math.abs(currentX - startX));
                         Log.e("TFF", "移动距离=getScrollX()=" + getScrollX());
 
-                        if (scrollX > 300) {
-                            moreLayout.setTranslationX(scrollX - 300);
+                        if (scrollX > 350) {
+                            moreLayout.setTranslationX(scrollX - 350);
                         }
 
-                        if (getScrollX() <= 350) {
+                        if (getScrollX() <= 450) {
                             isFling = true;
                             Log.e("TFF", "悬停，显示更多");
                             more.setText("更多");
