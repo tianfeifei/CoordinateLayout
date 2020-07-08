@@ -128,7 +128,7 @@ public class CommonCoordinateLayout extends LinearLayout {
         //HelpLayout的Clone事件
         MotionEvent eventMoreClone = MotionEvent.obtain(event);
         float moreX = event.getX() + getScrollX();
-        eventMoreClone.setLocation(2300, event.getY());
+        eventMoreClone.setLocation(moreX, event.getY());
         Log.e(TAG, "[onTouchEvent] event.getX()"+event.getX());
         Log.e(TAG, "[onTouchEvent] moreX"+moreX);
         Log.e(TAG, "[onTouchEvent] getRawX"+event.getRawX());
