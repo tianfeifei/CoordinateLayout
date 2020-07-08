@@ -68,14 +68,13 @@ public class CommonCoordinateLayout extends LinearLayout {
             }
         });
 
+        mScroller = new Scroller(CommonCoordinateLayout.this.getContext(), null);
 
-        setOrientation(HORIZONTAL);
-        mScroller = new Scroller(context, null);
     }
 
 
     private void initData() {
-        icon.setOnClickListener(new View.OnClickListener() {
+        moreLayout.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 Toast.makeText(CommonCoordinateLayout.this.getContext(), "更多", Toast.LENGTH_SHORT).show();
@@ -135,7 +134,7 @@ public class CommonCoordinateLayout extends LinearLayout {
 
         //RecyclerView的Clone事件
         MotionEvent eventClone = MotionEvent.obtain(event);
-        float cloneX = event.getX() - recyclerView.getRight() + getScrollX();
+        float cloneX = event.getX() - recyclerView.getLeft() + getScrollX();
         eventClone.setLocation(cloneX, eventClone.getY());
 
         float currentX = event.getRawX();
