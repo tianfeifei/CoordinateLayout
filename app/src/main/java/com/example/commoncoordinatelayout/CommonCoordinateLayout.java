@@ -3,11 +3,13 @@ package com.example.commoncoordinatelayout;
 import android.content.Context;
 import android.util.AttributeSet;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.LinearLayout;
 import android.widget.Scroller;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -54,8 +56,36 @@ public class CommonCoordinateLayout extends LinearLayout {
     }
 
     private void init(Context context) {
+        post(new Runnable() {
+            @Override
+            public void run() {
+                LayoutInflater.from(CommonCoordinateLayout.this.getContext()).inflate(R.layout.view_coordinate_layout, CommonCoordinateLayout.this);
+                more = findViewById(R.id.more);
+                icon = findViewById(R.id.icon);
+                moreLayout = findViewById(R.id.ll_more);
+
+                initData();
+            }
+        });
+
+
         setOrientation(HORIZONTAL);
         mScroller = new Scroller(context, null);
+    }
+
+
+    private void initData() {
+        icon.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Toast.makeText(CommonCoordinateLayout.this.getContext(), "更多", Toast.LENGTH_SHORT).show();
+                Log.e("TFF", "点击moreLayout");
+
+            }
+        });
+
+
+
     }
 
     public int getFirstThreshold() {
@@ -88,7 +118,6 @@ public class CommonCoordinateLayout extends LinearLayout {
     }
 
 
-
     @Override
     public boolean onInterceptTouchEvent(MotionEvent ev) {
         return true;
@@ -99,12 +128,15 @@ public class CommonCoordinateLayout extends LinearLayout {
         //HelpLayout的Clone事件
         MotionEvent eventMoreClone = MotionEvent.obtain(event);
         float moreX = event.getX() + getScrollX();
-        eventMoreClone.setLocation(moreX, event.getRawY());
+        eventMoreClone.setLocation(2300, event.getY());
+        Log.e(TAG, "[onTouchEvent] event.getX()"+event.getX());
+        Log.e(TAG, "[onTouchEvent] moreX"+moreX);
+        Log.e(TAG, "[onTouchEvent] getRawX"+event.getRawX());
 
         //RecyclerView的Clone事件
         MotionEvent eventClone = MotionEvent.obtain(event);
         float cloneX = event.getX() - recyclerView.getRight() + getScrollX();
-        eventClone.setLocation(cloneX, eventClone.getRawY());
+        eventClone.setLocation(cloneX, eventClone.getY());
 
         float currentX = event.getRawX();
         int scrollX = getScrollX();
@@ -121,8 +153,10 @@ public class CommonCoordinateLayout extends LinearLayout {
                 isSelfConsumer = false;
 
                 recyclerView.dispatchTouchEvent(eventClone);
-                if (inMoreLayout(event)) {
+                if (inMoreLayout(eventMoreClone)) {
                     moreLayout.dispatchTouchEvent(eventMoreClone);
+                    Log.e(TAG, "moreLayout down");
+
                 }
                 break;
             case MotionEvent.ACTION_MOVE:
@@ -130,8 +164,10 @@ public class CommonCoordinateLayout extends LinearLayout {
 
 
                 // 如果没有在滚动就将事件传到 moreLayout 里面
-                if (!isSelfConsumer && inMoreLayout(event)) {
+                if (!isSelfConsumer && inMoreLayout(eventMoreClone)) {
                     moreLayout.dispatchTouchEvent(eventMoreClone);
+                    Log.e(TAG, "moreLayout move");
+
                 }
 
                 Log.e(TAG, "Math.abs(currentX - startX)=" + Math.abs(currentX - startX));
@@ -195,8 +231,10 @@ public class CommonCoordinateLayout extends LinearLayout {
 
                 }
 
-                if (!isSelfConsumer && inMoreLayout(event)) {
+                if (!isSelfConsumer && inMoreLayout(eventMoreClone)) {
                     moreLayout.dispatchTouchEvent(eventMoreClone);
+                    Log.e(TAG, "moreLayout up");
+
                 }
 
 
@@ -262,11 +300,21 @@ public class CommonCoordinateLayout extends LinearLayout {
     }
 
     private boolean inMoreLayout(MotionEvent event) {
-        if (moreLayout.getTop() <= event.getY() && event.getY() <= moreLayout.getBottom()) {
+        boolean ret = moreLayout.getTop() <= event.getY() && event.getY() <= moreLayout.getBottom();
+        Log.e(TAG, "inMoreLayout="+ret);
+        boolean x = moreLayout.getLeft() <= event.getX() && event.getX() <= moreLayout.getRight();
+        Log.e(TAG, "inMoreLayout="+x);
 
-            return true;
-        }
-        return false;
+
+        Log.e(TAG, "inMoreLayout moreLayout.getTop() ="+moreLayout.getTop());
+        Log.e(TAG, "inMoreLayout event.getY()="+event.getY());
+        Log.e(TAG, "inMoreLayout moreLayout.getBottom()="+moreLayout.getBottom());
+
+        Log.e(TAG, "inMoreLayout moreLayout.getLeft() ="+moreLayout.getLeft());
+        Log.e(TAG, "inMoreLayout event.getX()="+event.getX());
+        Log.e(TAG, "inMoreLayout moreLayout.getRight()="+moreLayout.getRight());
+
+        return ret;
     }
 
 
@@ -428,15 +476,16 @@ public class CommonCoordinateLayout extends LinearLayout {
     }
 
 
-    public void setMoreLayout(View moreLayout) {
-        this.moreLayout = moreLayout;
-    }
 
-    public void setMore(TextView textView) {
-        this.more = textView;
-    }
-
-    public void setIcon(View icon) {
-        this.icon = icon;
-    }
+    //    public void setMoreLayout(View moreLayout) {
+//        this.moreLayout = moreLayout;
+//    }
+//
+//    public void setMore(TextView textView) {
+//        this.more = textView;
+//    }
+//
+//    public void setIcon(View icon) {
+//        this.icon = icon;
+//    }
 }

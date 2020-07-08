@@ -26,33 +26,35 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         final CommonCoordinateLayout coordinateLayout = findViewById(R.id.coordinateLayout);
-        final TextView more = findViewById(R.id.more);
-        final ImageView icon = findViewById(R.id.icon);
-        final RelativeLayout moreLayout = findViewById(R.id.ll_more);
+//        final TextView more = findViewById(R.id.more);
+//        final ImageView icon = findViewById(R.id.icon);
+//        final RelativeLayout moreLayout = findViewById(R.id.ll_more);
         final RecyclerView recyclerView = findViewById(R.id.recyclerView);
         recyclerView.setLayoutManager(new StaggeredGridLayoutManager(2,HORIZONTAL));
         Adapter adapter = new Adapter(this);
         recyclerView.setAdapter(adapter);
 
-        coordinateLayout.setMoreLayout(moreLayout);
-        coordinateLayout.setMore(more);
-        coordinateLayout.setIcon(icon);
+//        coordinateLayout.setMoreLayout(moreLayout);
+//        coordinateLayout.setMore(more);
+//        coordinateLayout.setIcon(icon);
         coordinateLayout.setRecyclerView(recyclerView);
 
-        more.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Toast.makeText(MainActivity.this, "更多", Toast.LENGTH_SHORT).show();
-                Log.e("TFF", "点击");
+//        more.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View v) {
+//                Toast.makeText(MainActivity.this, "更多", Toast.LENGTH_SHORT).show();
+//                Log.e("TFF", "点击");
+//
+//            }
+//        });
 
-            }
-        });
 
-        more.getViewTreeObserver().addOnGlobalLayoutListener(
+
+
+        recyclerView.getViewTreeObserver().addOnGlobalLayoutListener(
                 new ViewTreeObserver.OnGlobalLayoutListener() {
                     @Override
                     public void onGlobalLayout() {
-                        int recyclerViewWidth = coordinateLayout.getMeasuredWidth() - more.getMeasuredHeight();
 
                         //todo 设置左滑最大距离,需要调整下
                         //设置上滑最小高度
@@ -62,10 +64,10 @@ public class MainActivity extends AppCompatActivity {
                         layoutParams.width = getDisplay();
 //                        recyclerView.setLayoutParams(layoutParams);
 
-                        more.getViewTreeObserver().removeOnGlobalLayoutListener(this);
+                        recyclerView.getViewTreeObserver().removeOnGlobalLayoutListener(this);
                     }
                 });
-
+//
     }
 
     private  int getDisplay() {
