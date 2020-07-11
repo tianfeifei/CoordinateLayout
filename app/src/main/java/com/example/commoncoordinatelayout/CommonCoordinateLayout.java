@@ -40,6 +40,15 @@ public class CommonCoordinateLayout extends LinearLayout {
     private int mFirstThreshold = -1;
     private int mSecondThreshold = -1;
     private float mCharacterWidth;
+    private boolean enabledMore=true;
+
+    public boolean isEnabledMore() {
+        return enabledMore;
+    }
+
+    public void setEnabledMore(boolean enabledMore) {
+        this.enabledMore = enabledMore;
+    }
 
     private CoordinateListener mCoordinateListener;
 
@@ -252,14 +261,16 @@ public class CommonCoordinateLayout extends LinearLayout {
                 if (isSelfConsumer) {
                     if (scrollX > getFirstThreshold() && scrollX <= getSecondThreshold()) {//左滑，回弹到阈值1，显示更多
                         mScroller.startScroll(getScrollX(), 0, -scrollX + getFirstThreshold(), 0);
-                        Log.e(TAG, "悬停，显示更多");
+                        Log.e(TAG, "回弹，显示更多");
 
 
                     } else if (scrollX > getSecondThreshold()) {//显示松手加载
                         mScroller.startScroll(getScrollX(), 0, -getScrollX() + getFirstThreshold(), 0);
 //                        mScroller.fling(getScrollX(), getScrollY(), (int) -xVelocity, 0, minScrollX-1000, maxScrollX+1000 , 0, 0);//此处不能用抛射
                         Log.e(TAG, "回滚，松开查看");
-
+                        if (mCoordinateListener != null) {
+                            mCoordinateListener.onMore();
+                        }
                     }
 
 
@@ -284,7 +295,7 @@ public class CommonCoordinateLayout extends LinearLayout {
     public void computeScroll() {
         super.computeScroll();
 
-        if (mScroller.computeScrollOffset()) {
+        if (mScroller.computeScrollOffset() && enabledMore) {
 
             int nextX = mScroller.getCurrX();
             Log.e(TAG, "滚动中nextX=" + nextX);
@@ -322,7 +333,7 @@ public class CommonCoordinateLayout extends LinearLayout {
 
     private void dealBySelf(float dx, float moveX) {
         Log.e(TAG, "dealBySelf");
-
+        if (!enabledMore) return;
         // 做一个小的迟钝处理, 当手指垂直发生一定的距离时再开始滑动
         if (!isSelfConsumer && moveX < SCROLL_DELAY_DISTANCE) return;
 
