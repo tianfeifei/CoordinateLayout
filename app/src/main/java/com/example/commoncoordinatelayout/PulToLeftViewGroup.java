@@ -93,13 +93,6 @@ public class PulToLeftViewGroup extends LinearLayout {
 
     public void setRecyclerView(final RecyclerView recyclerView) {
         this.recyclerView = recyclerView;
-        recyclerView.setOnFlingListener(new RecyclerView.OnFlingListener() {
-            @Override
-            public boolean onFling(int velocityX, int velocityY) {
-//                mVelocityX = velocityX;
-                return false;
-            }
-        });
 
         recyclerView.setOnScrollListener(new RecyclerView.OnScrollListener() {
             @Override
@@ -339,7 +332,7 @@ public class PulToLeftViewGroup extends LinearLayout {
     private void dealBySelf(float dx, float moveX) {
         log("dealBySelf");
         if (!enabledMore) return;
-        // 做一个小的迟钝处理, 当手指垂直发生一定的距离时再开始滑动
+        // 做一个小的迟钝处理, 当手指横向发生一定的距离时再开始滑动
         if (!isSelfConsumer && moveX < SCROLL_DELAY_DISTANCE) return;
 
         if (dx < 0 && getScrollX() + dx < 0) {//右滑，如果加dx后列表到了头部，则滚动到头部
@@ -356,7 +349,8 @@ public class PulToLeftViewGroup extends LinearLayout {
     private void dealMoreLayout(float dx, int scrollX) {
         //平移更多布局
         if (scrollX > getFirstThreshold()) { //按0.5比例平移
-            float v = (float) ((dx) * 0.5) + moreLayout.getTranslationX();
+            float v = (float) ((dx) * 0.6) + moreLayout.getTranslationX();
+            log("dealMoreLayout dx=" + dx);
             log("dealMoreLayout v=" + v);
             float translationX = v;
             if (scrollX > getSecondThreshold()) {
