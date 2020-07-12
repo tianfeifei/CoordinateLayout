@@ -6,15 +6,9 @@ import androidx.recyclerview.widget.StaggeredGridLayoutManager;
 
 import android.content.Context;
 import android.os.Bundle;
-import android.util.Log;
-import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
 import android.view.WindowManager;
-import android.widget.ImageView;
-import android.widget.RelativeLayout;
-import android.widget.TextView;
-import android.widget.Toast;
 
 import static android.widget.LinearLayout.HORIZONTAL;
 
@@ -25,7 +19,7 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        final CommonCoordinateLayout coordinateLayout = findViewById(R.id.coordinateLayout);
+        final PulToLeftViewGroup coordinateLayout = findViewById(R.id.coordinateLayout);
 //        final TextView more = findViewById(R.id.more);
 //        final ImageView icon = findViewById(R.id.icon);
 //        final RelativeLayout moreLayout = findViewById(R.id.ll_more);

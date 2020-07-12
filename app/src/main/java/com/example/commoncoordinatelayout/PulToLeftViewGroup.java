@@ -6,11 +6,11 @@ import android.util.AttributeSet;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
+import android.view.VelocityTracker;
 import android.view.View;
 import android.widget.LinearLayout;
 import android.widget.Scroller;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -23,7 +23,7 @@ import androidx.recyclerview.widget.StaggeredGridLayoutManager;
  * Created by feifeitian on 2020/7/6.
  */
 
-public class CommonCoordinateLayout extends LinearLayout {
+public class PulToLeftViewGroup extends LinearLayout {
     public static final String TAG = "CommonCoordinateLayout";
     private static final int SCROLL_DELAY_DISTANCE = 30;
     private boolean isChanged;
@@ -36,7 +36,7 @@ public class CommonCoordinateLayout extends LinearLayout {
     private View icon;
     private boolean isSelfConsumer;
     private Scroller mScroller;
-    private int mVelocityX;
+    private float mVelocityX;
     //更多按钮宽度+箭头宽度+pingding
     private int mFirstThreshold = -1;
     //此阈值为显示"松手查看"的临界值，阈值1到阈值2为箭头旋转的过程
@@ -44,19 +44,21 @@ public class CommonCoordinateLayout extends LinearLayout {
     private float mCharacterWidth;
     private boolean enabledMore = true;
 
+    private VelocityTracker velocityTracker;
+
     private CoordinateListener mCoordinateListener;
 
-    public CommonCoordinateLayout(Context context) {
+    public PulToLeftViewGroup(Context context) {
         super(context);
         init(context);
     }
 
-    public CommonCoordinateLayout(Context context, @Nullable AttributeSet attrs) {
+    public PulToLeftViewGroup(Context context, @Nullable AttributeSet attrs) {
         super(context, attrs);
         init(context);
     }
 
-    public CommonCoordinateLayout(Context context, @Nullable AttributeSet attrs, int defStyleAttr) {
+    public PulToLeftViewGroup(Context context, @Nullable AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
         init(context);
     }
@@ -94,7 +96,7 @@ public class CommonCoordinateLayout extends LinearLayout {
         recyclerView.setOnFlingListener(new RecyclerView.OnFlingListener() {
             @Override
             public boolean onFling(int velocityX, int velocityY) {
-                mVelocityX = velocityX;
+//                mVelocityX = velocityX;
                 return false;
             }
         });
@@ -109,10 +111,10 @@ public class CommonCoordinateLayout extends LinearLayout {
             public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
                 super.onScrolled(recyclerView, dx, dy);
 
-                if (mVelocityX > 0 && isSlideToRight(recyclerView)) {
+                if (mVelocityX < 0 && isSlideToRight(recyclerView)) {
                     log("onScrolled# is scrolled end");
-                    mScroller.fling(getScrollX(), 0, (int) mVelocityX, 0, 0, getFirstThreshold(), 0, 0);
-                    CommonCoordinateLayout.this.invalidate();
+                    mScroller.fling(getScrollX(), 0, (int)- mVelocityX, 0, 0, getFirstThreshold(), 0, 0);
+                    PulToLeftViewGroup.this.invalidate();
 
                 }
             }
@@ -123,7 +125,7 @@ public class CommonCoordinateLayout extends LinearLayout {
         post(new Runnable() {
             @Override
             public void run() {
-                LayoutInflater.from(context).inflate(R.layout.view_coordinate_layout, CommonCoordinateLayout.this);
+                LayoutInflater.from(context).inflate(R.layout.view_coordinate_layout, PulToLeftViewGroup.this);
                 more = findViewById(R.id.more);
                 icon = findViewById(R.id.icon);
                 moreLayout = findViewById(R.id.ll_more);
@@ -195,17 +197,27 @@ public class CommonCoordinateLayout extends LinearLayout {
 
         switch (event.getAction()) {
             case MotionEvent.ACTION_DOWN:
+                recyclerView.dispatchTouchEvent(recyclerViewEvent);
+                if (inMoreLayout(event)) {
+                    moreLayout.dispatchTouchEvent(eventMoreClone);
+                }
+
                 //重置状态
                 isChanged = false;
                 moreLayout.setTranslationX(0);
                 lastX = startX = currentX;
                 mScroller.forceFinished(true);
                 isSelfConsumer = false;
+                mVelocityX=0;
 
-                recyclerView.dispatchTouchEvent(recyclerViewEvent);
-                if (inMoreLayout(event)) {
-                    moreLayout.dispatchTouchEvent(eventMoreClone);
+                if (velocityTracker == null) {
+                    velocityTracker = VelocityTracker.obtain();
+                } else {
+                    velocityTracker.clear();
                 }
+                velocityTracker.addMovement(event);
+
+
                 break;
             case MotionEvent.ACTION_MOVE:
                 float dX = lastX - currentX;
@@ -239,6 +251,9 @@ public class CommonCoordinateLayout extends LinearLayout {
                 }
 
                 lastX = currentX;
+                if (velocityTracker != null) {
+                    velocityTracker.addMovement(event);
+                }
                 break;
             case MotionEvent.ACTION_UP:
             case MotionEvent.ACTION_CANCEL:
@@ -260,6 +275,13 @@ public class CommonCoordinateLayout extends LinearLayout {
                     moreLayout.dispatchTouchEvent(eventMoreClone);
                 }
 
+                velocityTracker.computeCurrentVelocity(1000);
+                 mVelocityX = velocityTracker.getXVelocity();
+                velocityTracker.recycle();
+                velocityTracker = null;
+
+                log("xVelocity="+mVelocityX);
+
                 //回弹,惯性处理
                 if (isSelfConsumer) {
                     if (scrollX > getFirstThreshold() && scrollX <= getSecondThreshold()) {
@@ -272,6 +294,9 @@ public class CommonCoordinateLayout extends LinearLayout {
                         }
                     }
 
+                    if ((startX - currentX < 0) && scrollX > 0&&mVelocityX>0) {//右化惯性
+                        mScroller.fling(getScrollX(), 0, (int) -mVelocityX, 0, 0, this.getMeasuredWidth(), 0, 0);
+                    }
                 }
 
                 more.setText("更多");
