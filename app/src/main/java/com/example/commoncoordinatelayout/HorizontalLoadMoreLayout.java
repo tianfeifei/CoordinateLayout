@@ -1,6 +1,8 @@
 package com.example.commoncoordinatelayout;
 
+
 import android.content.Context;
+import android.graphics.Paint;
 import android.os.Vibrator;
 import android.util.AttributeSet;
 import android.util.Log;
@@ -8,29 +10,37 @@ import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.VelocityTracker;
 import android.view.View;
+import android.view.ViewConfiguration;
 import android.widget.LinearLayout;
 import android.widget.Scroller;
 import android.widget.TextView;
+
+
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.recyclerview.widget.StaggeredGridLayoutManager;
 
+import static androidx.customview.widget.ViewDragHelper.INVALID_POINTER;
+
+
 /**
  * 横滑时带有更多交互效果
  * 使用场景：双排横滑卡片，带有更多交互
- * Created by feifeitian on 2020/7/6.
+ *
+ * @author feifeitian
+ * @date 2020/7/6
  */
 
-public class PulToLeftViewGroup extends LinearLayout {
-    public static final String TAG = "CommonCoordinateLayout";
+public class HorizontalLoadMoreLayout extends LinearLayout {
+    public static final String TAG = "HorizontalLoadMoreLayout";
     private static final int SCROLL_DELAY_DISTANCE = 30;
     private boolean isChanged;
     private boolean isRecyclerViewMoving;
     private float startX;
     private float lastX;
-    private RecyclerView recyclerView;
+    private RecyclerView mRecyclerView;
     private View moreLayout;
     private TextView more;
     private View icon;
@@ -44,21 +54,27 @@ public class PulToLeftViewGroup extends LinearLayout {
     private float mCharacterWidth;
     private boolean enabledMore = true;
 
-    private VelocityTracker velocityTracker;
+    private VelocityTracker mVelocityTracker;
 
-    private CoordinateListener mCoordinateListener;
+    private PullToLeftListener mPullToLeftListener;
 
-    public PulToLeftViewGroup(Context context) {
+    private int mInitialTouchX, mInitialTouchY;
+    private int mTouchSlop;
+    private int mScrollPointerId = INVALID_POINTER;
+    private boolean isLanJie;
+
+
+    public HorizontalLoadMoreLayout(Context context) {
         super(context);
         init(context);
     }
 
-    public PulToLeftViewGroup(Context context, @Nullable AttributeSet attrs) {
+    public HorizontalLoadMoreLayout(Context context, @Nullable AttributeSet attrs) {
         super(context, attrs);
         init(context);
     }
 
-    public PulToLeftViewGroup(Context context, @Nullable AttributeSet attrs, int defStyleAttr) {
+    public HorizontalLoadMoreLayout(Context context, @Nullable AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
         init(context);
     }
@@ -84,17 +100,17 @@ public class PulToLeftViewGroup extends LinearLayout {
     /**
      * 设置触发阈值监听
      *
-     * @param coordinateListener
+     * @param pullToLeftListener
      */
-    public void setCoordinateListener(CoordinateListener coordinateListener) {
-        mCoordinateListener = coordinateListener;
+    public void setPullToLeftListener(PullToLeftListener pullToLeftListener) {
+        mPullToLeftListener = pullToLeftListener;
     }
 
 
     public void setRecyclerView(final RecyclerView recyclerView) {
-        this.recyclerView = recyclerView;
+        this.mRecyclerView = recyclerView;
 
-        recyclerView.setOnScrollListener(new RecyclerView.OnScrollListener() {
+        mRecyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
             @Override
             public void onScrollStateChanged(@NonNull RecyclerView recyclerView, int newState) {
                 super.onScrollStateChanged(recyclerView, newState);
@@ -106,8 +122,8 @@ public class PulToLeftViewGroup extends LinearLayout {
 
                 if (mVelocityX < 0 && isSlideToRight(recyclerView)) {
                     log("onScrolled# is scrolled end");
-                    mScroller.fling(getScrollX(), 0, (int)- mVelocityX, 0, 0, getFirstThreshold(), 0, 0);
-                    PulToLeftViewGroup.this.invalidate();
+                    mScroller.fling(getScrollX(), 0, (int) -mVelocityX, 0, 0, getFirstThreshold(), 0, 0);
+                    HorizontalLoadMoreLayout.this.invalidate();
 
                 }
             }
@@ -115,10 +131,11 @@ public class PulToLeftViewGroup extends LinearLayout {
     }
 
     private void init(final Context context) {
+        //此处使用post:为了保证加载时序问题，保证view_coordinate_layout后加载
         post(new Runnable() {
             @Override
             public void run() {
-                LayoutInflater.from(context).inflate(R.layout.view_coordinate_layout, PulToLeftViewGroup.this);
+                LayoutInflater.from(context).inflate(R.layout.view_coordinate_layout, HorizontalLoadMoreLayout.this);
                 more = findViewById(R.id.more);
                 icon = findViewById(R.id.icon);
                 moreLayout = findViewById(R.id.ll_more);
@@ -128,16 +145,17 @@ public class PulToLeftViewGroup extends LinearLayout {
         });
 
         mScroller = new Scroller(context, null);
+        mTouchSlop = ViewConfiguration.get(context).getScaledTouchSlop();
     }
 
 
     private void initData() {
-        moreLayout.setOnClickListener(new View.OnClickListener() {
+        moreLayout.setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View v) {
                 log("onClick# moreLayout is clicked");
-                if (mCoordinateListener != null) {
-                    mCoordinateListener.onMore();
+                if (mPullToLeftListener != null) {
+                    mPullToLeftListener.onMore();
                 }
 
             }
@@ -148,13 +166,13 @@ public class PulToLeftViewGroup extends LinearLayout {
         if (mFirstThreshold != -1) {
             return mFirstThreshold;
         }
-        return (int) (getCharacterWidth() + icon.getMeasuredWidth() + moreLayout.getPaddingLeft());
+        return (int) (getCharacterWidth() + icon.getMeasuredWidth() + moreLayout.getPaddingLeft()) + Util.dip2px(this.getContext(),5);
 
     }
 
     private float getCharacterWidth() {
         if ((mCharacterWidth == 0)) {
-            mCharacterWidth = Util.getCharacterWidth(more, 2);
+            mCharacterWidth = getCharacterWidth(more, 2);
         }
         return mCharacterWidth;
     }
@@ -163,17 +181,20 @@ public class PulToLeftViewGroup extends LinearLayout {
         if (mSecondThreshold != -1) {
             return mSecondThreshold;
         }
-        return getFirstThreshold() + Util.dip2px(this.getContext(), 60);
+        return getFirstThreshold() + Util.dip2px(this.getContext(),60);
 
     }
 
+
     @Override
-    public boolean onInterceptTouchEvent(MotionEvent ev) {
+    public boolean onInterceptTouchEvent(MotionEvent e) {
         return true;
     }
 
     @Override
     public boolean onTouchEvent(MotionEvent event) {
+        log("onTouchEvent#getAction" + event.getAction());
+
         //MoreLayout的Clone事件
         MotionEvent eventMoreClone = MotionEvent.obtain(event);
         float moreX = event.getX() + getScrollX() - moreLayout.getLeft();
@@ -182,7 +203,15 @@ public class PulToLeftViewGroup extends LinearLayout {
 
         //RecyclerView的Clone事件
         MotionEvent recyclerViewEvent = MotionEvent.obtain(event);
-        float cloneX = event.getX() - recyclerView.getLeft() + getScrollX();
+        if (mRecyclerView == null) {
+            log("mRecyclerView == null");
+            return false;
+        } else {
+            log("mRecyclerView != null");
+
+        }
+
+        float cloneX = event.getX() - mRecyclerView.getLeft() + getScrollX();
         recyclerViewEvent.setLocation(cloneX, recyclerViewEvent.getY());
 
         float currentX = event.getRawX();
@@ -190,10 +219,13 @@ public class PulToLeftViewGroup extends LinearLayout {
 
         switch (event.getAction()) {
             case MotionEvent.ACTION_DOWN:
-                recyclerView.dispatchTouchEvent(recyclerViewEvent);
+                mRecyclerView.dispatchTouchEvent(recyclerViewEvent);
                 if (inMoreLayout(event)) {
                     moreLayout.dispatchTouchEvent(eventMoreClone);
                 }
+                mScrollPointerId = event.getPointerId(0);
+                mInitialTouchX = (int) (event.getX() + 0.5f);
+                mInitialTouchY = (int) (event.getY() + 0.5f);
 
                 //重置状态
                 isChanged = false;
@@ -201,18 +233,35 @@ public class PulToLeftViewGroup extends LinearLayout {
                 lastX = startX = currentX;
                 mScroller.forceFinished(true);
                 isSelfConsumer = false;
-                mVelocityX=0;
+                mVelocityX = 0;
 
-                if (velocityTracker == null) {
-                    velocityTracker = VelocityTracker.obtain();
+
+                if (mVelocityTracker == null) {
+                    mVelocityTracker = VelocityTracker.obtain();
                 } else {
-                    velocityTracker.clear();
+                    mVelocityTracker.clear();
                 }
-                velocityTracker.addMovement(event);
+                mVelocityTracker.addMovement(event);
 
 
                 break;
             case MotionEvent.ACTION_MOVE:
+                final int index = event.findPointerIndex(mScrollPointerId);
+                if (index < 0) {
+                    return false;
+                }
+                final int x = (int) (event.getX(index) + 0.5f);
+                final int y = (int) (event.getY(index) + 0.5f);
+                final int dx = x - mInitialTouchX;
+                final int dy = y - mInitialTouchY;
+                if (Math.abs(dy) > mTouchSlop && Math.abs(dx) < Math.abs(dy)) {
+                    log("####e.Math.abs(dx) < Math.abs(dy)" + true);
+                    getParent().requestDisallowInterceptTouchEvent(false);
+                } else {
+                    getParent().requestDisallowInterceptTouchEvent(true);
+
+                }
+
                 float dX = lastX - currentX;
                 // 如果没有在滚动就将事件传到 moreLayout 里面
                 if (!isSelfConsumer && inMoreLayout(event)) {
@@ -228,24 +277,24 @@ public class PulToLeftViewGroup extends LinearLayout {
                         dealBySelf(dX, Math.abs(currentX - startX));
                         isRecyclerViewMoving = false;
                     } else {
-                        recyclerView.dispatchTouchEvent(recyclerViewEvent);
+                        mRecyclerView.dispatchTouchEvent(recyclerViewEvent);
                         isRecyclerViewMoving = true;
                     }
                 } else {
                     log("scroll to left");
-                    if (isSlideToRight(recyclerView)) {
+                    if (isSlideToRight(mRecyclerView)) {
                         dealBySelf(dX, Math.abs(currentX - startX));
                         isRecyclerViewMoving = false;
                     } else {
-                        recyclerView.dispatchTouchEvent(recyclerViewEvent);
+                        mRecyclerView.dispatchTouchEvent(recyclerViewEvent);
                         isRecyclerViewMoving = true;
                     }
 
                 }
 
                 lastX = currentX;
-                if (velocityTracker != null) {
-                    velocityTracker.addMovement(event);
+                if (mVelocityTracker != null) {
+                    mVelocityTracker.addMovement(event);
                 }
                 break;
             case MotionEvent.ACTION_UP:
@@ -259,7 +308,7 @@ public class PulToLeftViewGroup extends LinearLayout {
                     if (((Math.abs(startX - lastX) > 10) && !isRecyclerViewMoving)) {
                         recyclerViewEvent.setAction(MotionEvent.ACTION_CANCEL);
                     }
-                    recyclerView.dispatchTouchEvent(recyclerViewEvent);
+                    mRecyclerView.dispatchTouchEvent(recyclerViewEvent);
                     performClick();
 
                 }
@@ -267,42 +316,53 @@ public class PulToLeftViewGroup extends LinearLayout {
                 if (!isSelfConsumer && inMoreLayout(event)) {
                     moreLayout.dispatchTouchEvent(eventMoreClone);
                 }
+                if (mVelocityTracker != null) {
 
-                velocityTracker.computeCurrentVelocity(1000);
-                 mVelocityX = velocityTracker.getXVelocity();
-                velocityTracker.recycle();
-                velocityTracker = null;
-
-                log("xVelocity="+mVelocityX);
-
-                //回弹,惯性处理
-                if (isSelfConsumer) {
-                    if (scrollX > getFirstThreshold() && scrollX <= getSecondThreshold()) {
-                        mScroller.startScroll(getScrollX(), 0, -scrollX + getFirstThreshold(), 0);
-
-                    } else if (scrollX > getSecondThreshold()) {
-                        mScroller.startScroll(getScrollX(), 0, -getScrollX() + getFirstThreshold(), 0);
-                        if (mCoordinateListener != null) {
-                            mCoordinateListener.onMore();
-                        }
-                    }
-
-                    if ((startX - currentX < 0) && scrollX > 0&&mVelocityX>0) {//右化惯性
-                        mScroller.fling(getScrollX(), 0, (int) -mVelocityX, 0, 0, this.getMeasuredWidth(), 0, 0);
-                    }
+                    mVelocityTracker.computeCurrentVelocity(1000);
+                    mVelocityX = mVelocityTracker.getXVelocity();
+                    mVelocityTracker.recycle();
+                    mVelocityTracker = null;
                 }
 
-                more.setText("更多");
+
+                log("xVelocity=" + mVelocityX);
+
+                //回弹,惯性处理
+                performInertia(currentX, scrollX);
+
+                more.setText(R.string.more);
                 icon.setRotation(0);
                 //重置更多平移位置
                 moreLayout.setTranslationX(0);
                 postInvalidate();
                 break;
+            default:
+                break;
         }
 
         recyclerViewEvent.recycle();
         eventMoreClone.recycle();
+
+
         return true;
+    }
+
+    private void performInertia(float currentX, int scrollX) {
+        if (isSelfConsumer) {
+            if (scrollX > getFirstThreshold() && scrollX <= getSecondThreshold()) {
+                mScroller.startScroll(getScrollX(), 0, -scrollX + getFirstThreshold(), 0);
+
+            } else if (scrollX > getSecondThreshold()) {
+                mScroller.startScroll(getScrollX(), 0, -getScrollX() + getFirstThreshold(), 0);
+                if (mPullToLeftListener != null) {
+                    mPullToLeftListener.onMore();
+                }
+            }
+
+            if ((startX - currentX < 0) && scrollX > 0 && mVelocityX > 0) {//右化惯性
+                mScroller.fling(getScrollX(), 0, (int) -mVelocityX, 0, 0, this.getMeasuredWidth(), 0, 0);
+            }
+        }
     }
 
     @Override
@@ -331,9 +391,14 @@ public class PulToLeftViewGroup extends LinearLayout {
 
     private void dealBySelf(float dx, float moveX) {
         log("dealBySelf");
-        if (!enabledMore) return;
+        if (!enabledMore) {
+            return;
+        }
         // 做一个小的迟钝处理, 当手指横向发生一定的距离时再开始滑动
-        if (!isSelfConsumer && moveX < SCROLL_DELAY_DISTANCE) return;
+        if (!isSelfConsumer && moveX < SCROLL_DELAY_DISTANCE) {
+            return;
+        }
+
 
         if (dx < 0 && getScrollX() + dx < 0) {//右滑，如果加dx后列表到了头部，则滚动到头部
             scrollTo(0, 0);
@@ -348,21 +413,22 @@ public class PulToLeftViewGroup extends LinearLayout {
 
     private void dealMoreLayout(float dx, int scrollX) {
         //平移更多布局
-        if (scrollX > getFirstThreshold()) { //按0.5比例平移
-            float v = (float) ((dx) * 0.6) + moreLayout.getTranslationX();
+        if (scrollX > getFirstThreshold()) {
+            //按0.6比例平移
+            float nextTransX = (float) ((dx) * 0.6) + moreLayout.getTranslationX();
             log("dealMoreLayout dx=" + dx);
-            log("dealMoreLayout v=" + v);
-            float translationX = v;
+            log("dealMoreLayout nextTransX=" + nextTransX);
+            float translationX = nextTransX;
             if (scrollX > getSecondThreshold()) {
                 if (!isChanged) {
-                    translationX = v - getCharacterWidth();
+                    translationX = nextTransX - getCharacterWidth();
                     isChanged = true;
                     //震动
                     vibrate();
                 }
             } else {
                 if (isChanged) {
-                    translationX = v + getCharacterWidth();
+                    translationX = nextTransX + getCharacterWidth();
                     isChanged = false;
                 }
             }
@@ -381,10 +447,10 @@ public class PulToLeftViewGroup extends LinearLayout {
      */
     private void changeMoreName(int scrollX) {
         if (scrollX < getSecondThreshold()) {
-            more.setText("更多");
+            more.setText(R.string.more);
             log("dealMoreLayout，show more");
         } else {//转圈完成
-            more.setText("松开查看");
+            more.setText(R.string.release_look);
             log("dealMoreLayout，show release to view");
         }
     }
@@ -408,7 +474,7 @@ public class PulToLeftViewGroup extends LinearLayout {
 
 
     private boolean isTouchedOnRecyclerView(float currentX) {
-        boolean b = currentX <= recyclerView.getMeasuredWidth() - getScrollX();
+        boolean b = currentX <= mRecyclerView.getMeasuredWidth() - getScrollX();
         log("isTouchedOnRecyclerView=" + b);
         return b;
     }
@@ -448,14 +514,45 @@ public class PulToLeftViewGroup extends LinearLayout {
     }
 
     private void log(String log) {
-        Log.e(TAG, log);
+        Log.d(TAG, log);
+    }
+
+
+    /**
+     * 获取控件内部字体的宽度
+     *
+     * @param tv
+     * @param size
+     * @return
+     */
+    public static float getCharacterWidth(TextView tv, int size) {
+        if (null == tv) {
+            return 0f;
+        }
+        float v = getCharacterWidth(tv.getText().toString(), tv.getTextSize()) * tv.getScaleX();
+        return v * size;
+    }
+
+
+    private static float getCharacterWidth(String text, float size) {
+        if (null == text || "".equals(text)) {
+            return 0;
+        }
+        float width = 0;
+        Paint paint = new Paint();
+        paint.setTextSize(size);
+        float textWidth = paint.measureText(text);//得到总体长度
+        width = textWidth / text.length();//每一个字符的长度
+        return width;
     }
 
     /**
      * 点击更多时以及左滑到阈值时回调
      */
-    interface CoordinateListener {
+    public interface PullToLeftListener {
         public void onMore();
     }
 
 }
+
+

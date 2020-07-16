@@ -19,7 +19,7 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        final PulToLeftViewGroup coordinateLayout = findViewById(R.id.coordinateLayout);
+        final HorizontalLoadMoreLayout coordinateLayout = findViewById(R.id.coordinateLayout);
 //        final TextView more = findViewById(R.id.more);
 //        final ImageView icon = findViewById(R.id.icon);
 //        final RelativeLayout moreLayout = findViewById(R.id.ll_more);

@@ -6,7 +6,7 @@
     android:layout_height="match_parent"
     tools:context=".MainActivity">
 
-    <com.example.commoncoordinatelayout.PulToLeftViewGroup
+    <com.example.commoncoordinatelayout.HorizontalLoadMoreLayout
         android:id="@+id/coordinateLayout"
         android:layout_width="match_parent"
         android:layout_height="200dp"
@@ -17,6 +17,6 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent" />
 
-    </com.example.commoncoordinatelayout.PulToLeftViewGroup>
+    </com.example.commoncoordinatelayout.HorizontalLoadMoreLayout>
 
 </RelativeLayout>
