@@ -359,8 +359,12 @@ public class HorizontalLoadMoreLayout extends LinearLayout {
                 }
             }
 
-            if ((startX - currentX < 0) && scrollX > 0 && mVelocityX > 0) {//右化惯性
-                mScroller.fling(getScrollX(), 0, (int) -mVelocityX, 0, 0, this.getMeasuredWidth(), 0, 0);
+            if ((startX - currentX < 0) && scrollX > 0 && mVelocityX > 0) {//右滑惯性
+                //参数说明：往右滑，scrollx是由大到小变化；
+                mScroller.fling(getScrollX(), 0, (int) -mVelocityX, 0,
+                        0/*最小scrollx坐标,0为未发生滚动的位置；不能设置小与0，因为等于0时，应该recleryView滑动*/,
+                        this.getMeasuredWidth(),
+                        0, 0);
             }
         }
     }
